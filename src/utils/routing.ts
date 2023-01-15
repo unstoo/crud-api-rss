@@ -1,3 +1,5 @@
+import { ServiceReturn } from "../users/user.service";
+
 type ErrorType = {
   type: string;
   message: string;
@@ -12,7 +14,7 @@ const getError: GetError = (method, url) => ({
 
 type MatchRoute = (router: Record<string, any>, route: { method: string, url: string }) => {
   error: ErrorType | null;
-  service?: any | undefined;
+  service?: (params: Record<any, any>) => ServiceReturn;
   validator?: any;
   params?: Record<any, any>;
 }
@@ -38,7 +40,7 @@ export const matchRoute: MatchRoute = (router, { method, url }) => {
   }
 
   const dynamicControllers = Object.entries(routerForMethod)
-    .filter(([key, value]) => key.includes(':'))
+    .filter(([key, _]) => key.includes(':'))
     .map(([key, value]) => ({
       //@ts-ignore
       service: value.service,
@@ -51,18 +53,18 @@ export const matchRoute: MatchRoute = (router, { method, url }) => {
   const dynamicController = dynamicControllers.find(controller => url.includes(controller.routeName));
 
   if (dynamicController) {
+    const paramInUrl = url.slice(dynamicController.routeName.length);
     return {
       error: null,
       service: dynamicController.service,
       validator: dynamicController.validator,
       params: {
-        [dynamicController.paramName]: url.slice(dynamicController.routeName.length)
+        [dynamicController.paramName]: paramInUrl,
       },
     };
   }
 
   return {
     error: getError(method, url),
-    service: null,
   }
 };

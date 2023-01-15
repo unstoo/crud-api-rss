@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 
 import { UserRouter } from './users/user.controller';
 import { matchRoute } from './utils/routing';
-import { parseMethod, parseUrl } from './utils/helpers';
+import { parseMethod, parseUrl, SERVICE_TO_HTTP_CODE } from './utils/helpers';
 
 dotenv.config();
 
@@ -17,44 +17,58 @@ if (!port) {
 const server = createServer((req: IncomingMessage, res: ServerResponse) => {
   const method = parseMethod(req.method);
   const url = parseUrl(req.url)
+  const bodyChunks: any[] = [];
+  req.on("data", (chunk) => {
+    // @ts-ignore
+    bodyChunks.push(chunk);
+  });
 
-  const {
-    error: routingErr,
-    service,
-    validator,
-    params
-  } = matchRoute(UserRouter, { method, url });
-
-  if (routingErr) {
-    res.statusCode = 404;
+  req.on("end", () => {
     res.setHeader('Content-Type', 'text/plain');
-    return res.end(JSON.stringify(routingErr, null, 2));
-  }
+    const bodyData = Buffer.concat(bodyChunks).toString() || '{}';
+    let body: Record<any, any> = {};
 
-  const { error: validationErr, params: validatedParams } = validator(params);
-  if (validationErr) {
-    res.statusCode = 400;
-    res.setHeader('Content-Type', 'text/plain');
-    return res.end(JSON.stringify(validationErr, null, 2));
-  }
+    try {
+      body = JSON.parse(bodyData);
+    } catch (parsingError) {
+      res.statusCode = 500;
+      return res.end('Corrupted body data.')
+    }
 
-  const { error: serviceError, data } = service(validatedParams);
+    const {
+      error: routeErr,
+      service,
+      validator,
+      params
+    } = matchRoute(UserRouter, { method, url });
 
-  if (serviceError) {
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'text/plain');
-    return res.end(JSON.stringify(serviceError, null, 2));
-  }
+    if (routeErr) {
+      res.statusCode = 404;
+      return res.end(routeErr.message);
+    }
 
-  if (data === undefined) {
-    res.statusCode = 404;
-    res.setHeader('Content-Type', 'text/plain');
-    return res.end('Resource not found.');
-  }
+    const { error: validationErr, params: validatedParams } = validator({ ...params, ...body });
+    if (validationErr) {
+      res.statusCode = 400;
+      return res.end(validationErr.message);
+    }
 
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end(JSON.stringify(data, null, 2));
+    const { error: serviceError, result } = service!(validatedParams);
+
+    if (serviceError) {
+      res.statusCode = 500;
+      return res.end(JSON.stringify(serviceError, null, 2));
+    }
+
+    if (SERVICE_TO_HTTP_CODE[result.code] === 404) {
+      res.statusCode = 404;
+      return res.end('Resource not found.');
+    }
+
+    res.statusCode = SERVICE_TO_HTTP_CODE[result.code];
+    res.end(JSON.stringify(result.data, null, 2));
+  });
+
 });
 
 server.listen(port, () => {

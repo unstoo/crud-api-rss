@@ -1,34 +1,80 @@
-import { UsersRepository } from "../repository";
+import * as uuid from 'uuid';
+import { UserDTO, UsersRepository } from "../repository";
 
-export const UsersService = {
+export enum SERVICE_CODES {
+  FOUND = 'FOUND',
+  NOT_FOUND = 'NOT_FOUND',
+  CREATED = 'CREATED',
+  UPDATED = 'UPDATED',
+  DELETED = 'DELETED',
+}
+
+export type ServiceReturn = {
+  error: any | null;
+  result: {
+    data?: any;
+    code: SERVICE_CODES;
+  };
+}
+
+type ServiceType = {
+  getAll: () => ServiceReturn;
+  getById: ({ id }: { id: string }) => ServiceReturn;
+  create: (user: UserDTO) => ServiceReturn;
+  update: () => ServiceReturn;
+  delete: () => ServiceReturn;
+}
+
+export const UsersService: ServiceType = {
   getAll() {
     return {
       error: null,
-      data: UsersRepository,
+      result: {
+        data: UsersRepository,
+        code: SERVICE_CODES.FOUND,
+      },
     }
   },
-  getById({ id }: { id: string }) {
+  getById(params) {
+    const user = UsersRepository.find(user => user.id === params.id);
     return {
       error: null,
-      data: UsersRepository.find(user => user.id === id),
+      result: {
+        data: user ? user : {},
+        code: user ? SERVICE_CODES.FOUND : SERVICE_CODES.NOT_FOUND,
+      }
     }
   },
-  create() {
+  create(params) {
+    const newUser = {
+      ...params,
+      id: uuid.v4(),
+    };
+    UsersRepository.push(newUser);
     return {
       error: null,
-      data: true,
+      result: {
+        data: newUser,
+        code: SERVICE_CODES.CREATED
+      },
     }
   },
   update() {
     return {
       error: null,
-      data: true,
+      result: {
+        data: true,
+        code: SERVICE_CODES.UPDATED
+      },
     }
   },
   delete() {
     return {
       error: null,
-      data: true,
+      result: {
+        data: true,
+        code: SERVICE_CODES.DELETED
+      },
     }
   },
 };

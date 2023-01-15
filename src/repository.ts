@@ -1,22 +1,21 @@
-
-export type User = {
-  id?: string;
+export type UserDTO = {
+  id: string | null;
   username: string;
   age: number;
   hobbies: string[];
 }
 
-export const UsersRepository: User[] = [
+export const UsersRepository: UserDTO[] = [
   {
-    id: '-1',
+    id: '7277fd95-f856-4d54-9c11-5f259c3fafbf',
     username: 'admin',
     age: 55,
-    hobbies: ['tinkering', 'bbq', 'hiking']
+    hobbies: ['bbq', 'hiking']
   },
   {
-    id: '0',
+    id: '7277fd95-f8d6-4d54-9c11-5f259c3fafbf',
     username: 'blank_user',
     age: 0,
-    hobbies: ['idling', 'waitin', 'sleeping']
+    hobbies: ['idling', 'sleeping']
   },
 ];

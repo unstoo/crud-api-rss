@@ -1,5 +1,6 @@
 import * as uuid from 'uuid';
 import { UsersService } from './user.service';
+import { UserDTO } from '../repository';
 
 type ValidatorType = (params: Object) => {
   error: null | Record<any, any>;
@@ -25,9 +26,10 @@ export const UserRouter = {
 
         return {
           error: isValid ? null : {
-            message: 'Invalid user id.'
+            type: 'INVALID_DATA',
+            message: 'Invalid user `id`.'
           },
-          params: { ...params },
+          params,
         }
       },
     },
@@ -35,16 +37,33 @@ export const UserRouter = {
   'POST': {
     'api/users': {
       service: UsersService.create,
+      validator: (params: UserDTO) => {
+        if ([params.username, params.age, params.hobbies].some(item => !item)) {
+          return {
+            error: {
+              type: 'INVALID_DATA',
+              message: 'Insufficient data.'
+            }
+          }
+        }
+
+        return {
+          error: null,
+          params,
+        }
+      }
     },
   },
   'PUT': {
     'api/users/:userId': {
       service: UsersService.update,
+      validator: defaultValidator,
     },
   },
   'DELETE': {
     'api/users/:userId': {
       service: UsersService.delete,
+      validator: defaultValidator,
     },
   },
 };
