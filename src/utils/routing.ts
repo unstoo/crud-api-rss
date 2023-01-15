@@ -51,7 +51,6 @@ export const matchRoute: MatchRoute = (router, { method, url }) => {
     }));
 
   const dynamicController = dynamicControllers.find(controller => url.includes(controller.routeName));
-  console.log(dynamicController)
   if (dynamicController) {
     const paramInUrl = url.slice(dynamicController.routeName.length);
     return {

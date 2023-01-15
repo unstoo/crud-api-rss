@@ -19,7 +19,6 @@ const server = createServer((req: IncomingMessage, res: ServerResponse) => {
   const url = parseUrl(req.url)
   const bodyChunks: any[] = [];
   req.on("data", (chunk) => {
-    // @ts-ignore
     bodyChunks.push(chunk);
   });
 
@@ -31,7 +30,7 @@ const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     try {
       body = JSON.parse(bodyData);
     } catch (parsingError) {
-      res.statusCode = 500;
+      res.statusCode = 400;
       return res.end('Corrupted body data.')
     }
 
@@ -68,9 +67,21 @@ const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     res.statusCode = SERVICE_TO_HTTP_CODE[result.code];
     res.end(JSON.stringify(result.data, null, 2));
   });
-
 });
 
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
+});
+
+server.on('error', () => {
+  process.stderr.write('Server error. Shutting down...');
+  process.exit(1);
+});
+
+server.on('clientError', (err: NodeJS.ErrnoException, socket) => {
+  if (err.code === 'ECONNRESET' || !socket.writable) {
+    return;
+  }
+
+  socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
