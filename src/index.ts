@@ -56,6 +56,12 @@ const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     return res.end(JSON.stringify(serviceError, null, 2));
   }
 
+  if (data === undefined) {
+    res.statusCode = 404;
+    res.setHeader('Content-Type', 'text/plain');
+    return res.end('Resource not found.');
+  }
+
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
   res.end(JSON.stringify(data, null, 2));
