@@ -21,7 +21,7 @@ type ServiceType = {
   getAll: () => ServiceReturn;
   getById: ({ id }: { id: string }) => ServiceReturn;
   create: (user: UserDTO) => ServiceReturn;
-  update: () => ServiceReturn;
+  update: (user: UserDTO & { id: string }) => ServiceReturn;
   delete: ({ id }: { id: string }) => ServiceReturn;
 }
 
@@ -59,12 +59,16 @@ export const UsersService: ServiceType = {
       },
     }
   },
-  update() {
+  update(params) {
+    const existingUser = UsersRepository.find(user => params.id === user.id);
+    if (existingUser) {
+      Object.assign(existingUser, params);
+    }
     return {
       error: null,
       result: {
-        data: true,
-        code: SERVICE_CODES.UPDATED
+        data: existingUser,
+        code: existingUser ? SERVICE_CODES.UPDATED : SERVICE_CODES.NOT_FOUND,
       },
     }
   },
