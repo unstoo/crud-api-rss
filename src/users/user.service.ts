@@ -7,10 +7,10 @@ export const UsersService = {
       data: UsersRepository,
     }
   },
-  getById() {
+  getById({ id }: { id: string }) {
     return {
       error: null,
-      data: false,
+      data: UsersRepository.find(user => user.id === id),
     }
   },
   create() {

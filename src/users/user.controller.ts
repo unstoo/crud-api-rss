@@ -3,17 +3,17 @@ import { UsersService } from './user.service';
 export const UserRouter = {
   'GET': {
     'api/users': {
-      validator: (props: Record<any, any>) => ({
+      validator: () => ({
         error: null,
-        data: { ...props },
+        params: {},
       }),
       service: UsersService.getAll,
     },
-    'api/users/{userId}': {
+    'api/users/:id': {
       service: UsersService.getById,
-      validator: (props: Record<any, any>) => ({
+      validator: (params: Record<any, any>) => ({
         error: null,
-        data: { ...props },
+        params: { ...params },
       }),
     },
   },
@@ -23,12 +23,12 @@ export const UserRouter = {
     },
   },
   'PUT': {
-    'api/users/{userId}': {
+    'api/users/:userId': {
       service: UsersService.update,
     },
   },
   'DELETE': {
-    'api/users/{userId}': {
+    'api/users/:userId': {
       service: UsersService.delete,
     },
   },
