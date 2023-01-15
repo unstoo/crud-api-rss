@@ -22,7 +22,7 @@ type ServiceType = {
   getById: ({ id }: { id: string }) => ServiceReturn;
   create: (user: UserDTO) => ServiceReturn;
   update: () => ServiceReturn;
-  delete: () => ServiceReturn;
+  delete: ({ id }: { id: string }) => ServiceReturn;
 }
 
 export const UsersService: ServiceType = {
@@ -45,9 +45,9 @@ export const UsersService: ServiceType = {
       }
     }
   },
-  create(params) {
+  create(user) {
     const newUser = {
-      ...params,
+      ...user,
       id: uuid.v4(),
     };
     UsersRepository.push(newUser);
@@ -68,12 +68,17 @@ export const UsersService: ServiceType = {
       },
     }
   },
-  delete() {
+  delete(params) {
+    const index = UsersRepository.findIndex(user => user.id === params.id);
+    const hasFound = index !== -1;
+    if (hasFound) {
+      UsersRepository.splice(index, 1);
+    }
     return {
       error: null,
       result: {
-        data: true,
-        code: SERVICE_CODES.DELETED
+        data: hasFound ? true : false,
+        code: hasFound ? SERVICE_CODES.DELETED : SERVICE_CODES.NOT_FOUND,
       },
     }
   },

@@ -54,7 +54,9 @@ const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     }
 
     const { error: serviceError, result } = service!(validatedParams);
-
+    console.log({
+      result
+    })
     if (serviceError) {
       res.statusCode = 500;
       return res.end(JSON.stringify(serviceError, null, 2));

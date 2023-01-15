@@ -12,40 +12,40 @@ const defaultValidator: ValidatorType = (params: any) => ({
   params,
 })
 
+const uuidValidator: ValidatorType = (params: Record<any, any>) => {
+  const isValid = uuid.validate(params?.id);
+
+  return {
+    error: isValid ? null : {
+      type: 'INVALID_DATA',
+      message: 'Invalid user `id`.'
+    },
+    params,
+  }
+};
+
 export const UserRouter = {
   'GET': {
     'api/users': {
-      validator: defaultValidator,
       service: UsersService.getAll,
+      validator: defaultValidator,
     },
     'api/users/:id': {
       service: UsersService.getById,
-      validator: (params: Record<any, any>) => {
-        const id = params?.id;
-        const isValid = uuid.validate(id);
-
-        return {
-          error: isValid ? null : {
-            type: 'INVALID_DATA',
-            message: 'Invalid user `id`.'
-          },
-          params,
-        }
-      },
+      validator: uuidValidator,
     },
   },
   'POST': {
     'api/users': {
       service: UsersService.create,
       validator: (params: UserDTO) => {
-        if ([params.username, params.age, params.hobbies].some(item => !item)) {
+        if ([params.username, params.age, params.hobbies].some(item => !item))
           return {
             error: {
               type: 'INVALID_DATA',
               message: 'Insufficient data.'
             }
-          }
-        }
+          };
 
         return {
           error: null,
@@ -55,15 +55,15 @@ export const UserRouter = {
     },
   },
   'PUT': {
-    'api/users/:userId': {
+    'api/users/:id': {
       service: UsersService.update,
       validator: defaultValidator,
     },
   },
   'DELETE': {
-    'api/users/:userId': {
+    'api/users/:id': {
       service: UsersService.delete,
-      validator: defaultValidator,
+      validator: uuidValidator,
     },
   },
 };
