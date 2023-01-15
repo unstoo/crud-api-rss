@@ -61,10 +61,6 @@ export const matchRoute: MatchRoute = (router, { method, url }) => {
     };
   }
 
-  console.log({ dynamicController })
-
-  console.log({ url })
-
   return {
     error: getError(method, url),
     service: null,

@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 
 import { UserRouter } from './users/user.controller';
 import { matchRoute } from './utils/routing';
+import { parseMethod, parseUrl } from './utils/helpers';
 
 dotenv.config();
 
@@ -13,39 +14,28 @@ if (!port) {
   process.exit(1);
 }
 
-const parseUrl = (url: string | undefined): string => {
-  if (url === '/') return '/'
-  if (!url || url.length === 0) return '';
-
-  let parsedUrl = url.startsWith('/') ? url.slice(1) : url;
-  parsedUrl = parsedUrl.endsWith('/') ? parsedUrl.slice(0, -1) : parsedUrl;
-  return parsedUrl;
-}
-
-const parseMethod = (method: string | undefined) => method || '';
-
 const server = createServer((req: IncomingMessage, res: ServerResponse) => {
   const method = parseMethod(req.method);
   const url = parseUrl(req.url)
 
   const {
-    error: routerError,
+    error: routingErr,
     service,
     validator,
     params
   } = matchRoute(UserRouter, { method, url });
 
-  if (routerError) {
+  if (routingErr) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/plain');
-    return res.end(JSON.stringify(routerError, null, 2));
+    return res.end(JSON.stringify(routingErr, null, 2));
   }
 
-  const { error: validatorError, params: validatedParams } = validator(params);
-  if (validatorError) {
+  const { error: validationErr, params: validatedParams } = validator(params);
+  if (validationErr) {
     res.statusCode = 400;
     res.setHeader('Content-Type', 'text/plain');
-    return res.end(JSON.stringify(validatorError, null, 2));
+    return res.end(JSON.stringify(validationErr, null, 2));
   }
 
   const { error: serviceError, data } = service(validatedParams);
