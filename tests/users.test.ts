@@ -25,7 +25,7 @@ server.on('listening', async () => {
 
   let createdUserData: UserDTO | undefined;
 
-  process.stdout.write('\nTest suite started...\n\n');
+  process.stdout.write('\nTest suite has started...\n\n');
 
   // Get all records with a GET api / users request(an empty array is expected)
   await itAsync('GET api/users/ should return list of users.', async () => {
@@ -62,8 +62,8 @@ server.on('listening', async () => {
       const dataString = JSON.stringify(userData);
 
       const options = {
-        hostname: '127.0.0.1',
-        port: 4000,
+        hostname: testHost,
+        port: testPort,
         path: '/api/users',
         method: 'POST',
         headers: {
@@ -112,7 +112,33 @@ server.on('listening', async () => {
     });
   });
 
-  process.stdout.write('Test suite completed.\n\n');
+  // With a GET api / user / { userId } request, we try to get the created record by its id(the created record is expected)
+  await itAsync('GET `api/users/uuid` should return a created user.', async () => {
+    const result = await new Promise((resolve) => {
+      get(usersURL + `/${createdUserData!.id}`, (res) => {
+        let data: any[] = [];
+
+        res.on('data', (chunk) => {
+          data.push(chunk);
+        });
+
+        res.on('close', () => {
+          const json = JSON.parse(data.toString());
+          resolve({
+            data: json,
+            statusCode: res.statusCode,
+          });
+        });
+      });
+    });
+
+    assert.deepEqual(result, {
+      statusCode: 200,
+      data: createdUserData,
+    });
+  });
+
+  process.stdout.write('\nTest suite has completed.\n\n');
   process.exit(0);
 })
 
@@ -122,7 +148,7 @@ async function itAsync(desc: string, fn: Fn) {
   try {
     await fn();
     process.stdout.write(`\x1b[32m\u2714\x1b[0m ${desc}`);
-    process.stdout.write('\n\n');
+    process.stdout.write('\n');
   } catch (error) {
     process.stderr.write(`\x1b[31m\u2718\x1b[0m ${desc}`);
     process.stdout.write('\n');
@@ -130,8 +156,3 @@ async function itAsync(desc: string, fn: Fn) {
     process.stdout.write('\n');
   }
 };
-
-// With a GET api / user / { userId } request, we try to get the created record by its id(the created record is expected)
-// We try to update the created record with a PUT api / users / { userId }request(a response is expected containing an updated object with the same id)
-// With a DELETE api / users / { userId } request, we delete the created object by id(confirmation of successful deletion is expected)
-// With a GET api / users / { userId } request, we are trying to get a deleted object by id(expected answer is that there is no such object)
