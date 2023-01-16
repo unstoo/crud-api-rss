@@ -6,9 +6,8 @@ dotenv.config();
 const configPort = parseInt(process.env.PORT ?? '');
 
 if (!configPort) {
-  process.stderr.write('Missing config data');
+  process.stderr.write('Missing config data.\n');
   process.exit(1);
 }
-
 
 startServer(configPort, '127.0.0.1');

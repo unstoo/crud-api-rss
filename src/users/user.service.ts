@@ -50,6 +50,11 @@ export const UsersService: ServiceType = {
       ...user,
       id: uuid.v4(),
     };
+    //@ts-ignore
+    process?.send?.({
+      type: 'CREATE',
+      data: newUser,
+    })
     UsersRepository.push(newUser);
     return {
       error: null,
@@ -62,6 +67,11 @@ export const UsersService: ServiceType = {
   update(params) {
     const existingUser = UsersRepository.find(user => params.id === user.id);
     if (existingUser) {
+      //@ts-ignore
+      process?.send?.({
+        type: 'UPDATE',
+        data: params,
+      })
       Object.assign(existingUser, params);
     }
     return {
@@ -76,6 +86,11 @@ export const UsersService: ServiceType = {
     const index = UsersRepository.findIndex(user => user.id === params.id);
     const hasFound = index !== -1;
     if (hasFound) {
+      //@ts-ignore
+      process?.send?.({
+        type: 'DELETE',
+        data: params,
+      })
       UsersRepository.splice(index, 1);
     }
     return {

@@ -5,17 +5,26 @@ export type UserDTO = {
   hobbies: string[];
 }
 
-export const UsersRepository: UserDTO[] = [
-  // {
-  //   id: '7277fd95-f856-4d54-9c11-5f259c3fafbf',
-  //   username: 'admin',
-  //   age: 55,
-  //   hobbies: ['bbq', 'hiking']
-  // },
-  // {
-  //   id: '7277fd95-f8d6-4d54-9c11-5f259c3fafbf',
-  //   username: 'blank_user',
-  //   age: 0,
-  //   hobbies: ['idling', 'sleeping']
-  // },
-];
+process.on('message', function ({
+  type,
+  data
+}) {
+  // each worker is listning to 'message' event
+  // and then perform relevant tasks.
+  if (type === 'CREATE') {
+    return UsersRepository.push(data);
+  }
+
+  if (type === 'UPDATE') {
+    const user = UsersRepository.find(user => data.id === user.id) as unknown as UserDTO;
+    return Object.assign(user, data);
+  }
+
+  if (type === 'DELETE') {
+    const index = UsersRepository.findIndex(user => user.id === data.id);
+    return UsersRepository.splice(index, 1);
+  }
+});
+
+
+export const UsersRepository: UserDTO[] = [];

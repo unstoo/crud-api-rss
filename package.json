@@ -6,6 +6,7 @@
   "scripts": {
     "start:dev": "nodemon ./src/index.ts",
     "start:prod": "tsc && node ./dist/index.js",
+    "start:multi": "ts-node ./src/multi.ts",
     "test": "ts-node ./tests/users.test.ts"
   },
   "repository": {
