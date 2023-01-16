@@ -1,7 +1,8 @@
-import { get } from 'node:http';
+import { get, request } from 'node:http';
 import { strict as assert } from 'node:assert';
 
 import { startServer } from "../src/server";
+import { UserDTO } from '../src/repository';
 
 
 const testPort = 4000;
@@ -14,14 +15,22 @@ const {
 
 server.on('listening', async () => {
 
-  const apiUrl = 'api/users';
+  const usersURL = `http://${host}:${port}/api/users`;
+
+  const userData: UserDTO = {
+    username: 'marucs_aurelius',
+    age: 1192,
+    hobbies: ['vini', 'vidi', 'vici'],
+  };
+
+  let createdUserData: UserDTO | undefined;
 
   process.stdout.write('\nTest suite started...\n\n');
 
   // Get all records with a GET api / users request(an empty array is expected)
-  await itAsync('should GET api/users/ shout return list of users.', async () => {
+  await itAsync('GET api/users/ should return list of users.', async () => {
     const result = await new Promise((resolve) => {
-      get(`http://${host}:${port}/${apiUrl}`, (res) => {
+      get(usersURL, (res) => {
         let data: any[] = [];
 
         res.on('data', (chunk) => {
@@ -44,6 +53,65 @@ server.on('listening', async () => {
     });
   });
 
+  // A new object is created by a POST api / users request(a response containing newly created record is expected)
+  await itAsync('POST api/users/ should create a new user.', async () => {
+    const result: {
+      statusCode?: number;
+      data?: UserDTO;
+    } = await new Promise((resolve, reject) => {
+      const dataString = JSON.stringify(userData);
+
+      const options = {
+        hostname: '127.0.0.1',
+        port: 4000,
+        path: '/api/users',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(dataString)
+        },
+      };
+      let data: any[] = [];
+
+      const req = request(options, (res) => {
+
+        res.on('data', (chunk) => {
+          data.push(chunk);
+        });
+
+        res.on('close', () => {
+          const json = JSON.parse(data.length ? data.toString() : '[ "no_body" ]');
+          resolve({
+            data: json,
+            statusCode: res.statusCode,
+          });
+        });
+      });
+
+      req.on('error', (err) => {
+        reject(err)
+      })
+
+      req.on('timeout', () => {
+        req.destroy()
+        reject(new Error('Request time out'))
+      })
+
+      req.write(dataString)
+      req.end()
+    });
+
+    createdUserData = result.data;
+
+    assert.deepEqual(result, {
+      statusCode: 201,
+      data: {
+        ...userData,
+        id: createdUserData!.id,
+      },
+    });
+  });
+
   process.stdout.write('Test suite completed.\n\n');
   process.exit(0);
 })
@@ -63,7 +131,6 @@ async function itAsync(desc: string, fn: Fn) {
   }
 };
 
-// A new object is created by a POST api / users request(a response containing newly created record is expected)
 // With a GET api / user / { userId } request, we try to get the created record by its id(the created record is expected)
 // We try to update the created record with a PUT api / users / { userId }request(a response is expected containing an updated object with the same id)
 // With a DELETE api / users / { userId } request, we delete the created object by id(confirmation of successful deletion is expected)
