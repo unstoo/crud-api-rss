@@ -47,7 +47,7 @@ if (cluster.isPrimary) {
   }
 
   workers.forEach(w => w.worker.on('message', ({ type, data }: any) => {
-    process.stdout.write(`PCI action:${type} from worker on PORT ${w.port}\n`);
+    process.stdout.write(`IPC action:${type} from worker on PORT ${w.port}\n`);
 
     workers.forEach(workerForBroadcast => {
       if (w.port !== workerForBroadcast.port) {
